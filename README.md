@@ -186,3 +186,8 @@ pytest
 ## License
 
 MIT
+ ![Image Alt](https://github.com/muthyalamaheshkumar8-debug/intelligent-web-content-summarizer/blob/a18a0f2fc6d6cc0b66b9d93d9e9876b9b9f2c094/dd754dd7-fa95-4299-8771-f9192f245473.png)
+
+
+
+
