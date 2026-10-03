@@ -1,5 +1,15 @@
 import { test, expect } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { createHash } from 'node:crypto'
+
+test.beforeEach(async ({ context }, testInfo) => {
+  // Every browser workflow has an independent rate-limit identity, including
+  // worker restarts. Keep the production limiter active in the test server.
+  const bytes = createHash('sha256').update(testInfo.testId).digest()
+  await context.setExtraHTTPHeaders({
+    'X-Forwarded-For': `10.${bytes[0]}.${bytes[1]}.${bytes[2]}`,
+  })
+})
 
 async function summarize(page, url = 'https://example.com/article') {
   await page.getByLabel('Article URL', { exact: true }).fill(url)

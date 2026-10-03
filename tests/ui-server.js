@@ -5,7 +5,9 @@ const { app } = fixture({
   config: {
     origins: ['http://127.0.0.1:5050'],
     production: false,
-    trustProxy: 0,
+    // Test clients supply distinct source IPs so the real limiter is isolated.
+    // This fixture listens on loopback only; production uses server/server.js.
+    trustProxy: 1,
     sessionSecret: 'isolated-browser-test-session-secret-123456789',
   },
   scrapeArticle: async (url) => {
