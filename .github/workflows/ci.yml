@@ -24,12 +24,14 @@ jobs:
       - run: npm run lint --prefix client
       - run: npm test --prefix server
       - run: npm run test:db --prefix server
-      - run: npm run test:host --prefix server
       - run: pytest tests/test_scraper.py -q
       - run: npm run build --prefix client
+      - run: npm run test:host --prefix server
       - run: npx playwright install --with-deps chromium
         working-directory: client
       - run: npm test --prefix client
       - run: npm audit --prefix server --audit-level=high
       - run: npm audit --prefix client --audit-level=high
       - run: pip-audit -r scraper/requirements.txt
+      - name: Build free-hosting container
+        run: docker build --file Dockerfile.render --tag summarizer-free:ci .
