@@ -1,10 +1,25 @@
 const express = require('express');
-const router = express.Router();
-const summaryController = require('../controllers/summaryController');
+const { rateLimit } = require('express-rate-limit');
 
-router.post('/', summaryController.createSummary);
-router.get('/', summaryController.getSummaries);
-router.get('/:id', summaryController.getSummary);
-router.delete('/:id', summaryController.deleteSummary);
-
-module.exports = router;
+function createSummaryRouter(controller) {
+  const router = express.Router();
+  router.post(
+    '/',
+    rateLimit({
+      windowMs: 60000,
+      limit: 5,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      message: {
+        code: 'RATE_LIMITED',
+        message: 'Summary limit reached. Try again in a minute.',
+      },
+    }),
+    controller.createSummary,
+  );
+  router.get('/', controller.getSummaries);
+  router.get('/:id', controller.getSummary);
+  router.delete('/:id', controller.deleteSummary);
+  return router;
+}
+module.exports = { createSummaryRouter };

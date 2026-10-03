@@ -1,0 +1,31 @@
+# No paid database, disk, worker, or second web service is provisioned.
+services:
+  - type: web
+    name: intelligent-web-content-summarizer
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: '10000'
+      - key: TRUST_PROXY
+        value: '1'
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SCRAPER_TOKEN
+        generateValue: true

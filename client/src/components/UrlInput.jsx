@@ -1,41 +1,64 @@
-import { useState } from 'react'
-import axios from '../services/api'
+import { useState } from 'react';
+import Icon from './Icon';
 
-function UrlInput({ onSummarize }) {
-  const [url, setUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!url.trim()) return
-
-    setLoading(true)
+export default function UrlInput({ onSummarize, loading, disabled }) {
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
+  const submit = (event) => {
+    event.preventDefault();
     try {
-      await onSummarize(url.trim())
-    } finally {
-      setLoading(false)
+      const value = new URL(url.trim());
+      if (
+        !['http:', 'https:'].includes(value.protocol) ||
+        value.username ||
+        value.password
+      )
+        throw new Error();
+      setError('');
+      onSummarize(value.href);
+    } catch {
+      setError('Enter a complete HTTP or HTTPS article URL.');
     }
-  }
-
+  };
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        type="url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        placeholder="Enter article URL (e.g., https://example.com/article)"
-        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        required
-      />
-      <button
-        type="submit"
-        disabled={loading}
-        className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-      >
-        {loading ? 'Processing...' : 'Summarize'}
-      </button>
+    <form onSubmit={submit} className="url-form">
+      <label htmlFor="article-url">Article URL</label>
+      <div className={`url-row ${error ? 'invalid' : ''}`}>
+        <Icon name="link" />
+        <input
+          id="article-url"
+          name="url"
+          type="url"
+          value={url}
+          onChange={(event) => {
+            setUrl(event.target.value);
+            setError('');
+          }}
+          placeholder="https://example.com/an-interesting-article"
+          required
+          maxLength={2048}
+          disabled={loading || disabled}
+          aria-invalid={Boolean(error)}
+          aria-describedby="url-hint"
+        />
+        <button
+          type="submit"
+          className="button primary"
+          disabled={loading || disabled}
+        >
+          {loading ? (
+            <span className="spinner" />
+          ) : (
+            <Icon name="sparkle" size={18} />
+          )}
+          {loading ? 'Summarizing…' : 'Summarize article'}
+          {!loading && <Icon name="arrow" size={16} />}
+        </button>
+      </div>
+      <p id="url-hint" className={error ? 'field-error' : 'hint'}>
+        {error ||
+          'Works with public articles, blog posts, and news pages. Login-only pages and PDFs are not supported.'}
+      </p>
     </form>
-  )
+  );
 }
-
-export default UrlInput

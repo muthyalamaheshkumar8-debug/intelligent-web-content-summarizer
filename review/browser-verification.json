@@ -1,0 +1,106 @@
+[
+  {
+    "check": "complete reading",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:15.638Z",
+      "duration": 3420.104,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "private history",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:19.912Z",
+      "duration": 2991.9069999999997,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "upstream failure",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:23.793Z",
+      "duration": 3531.3430000000003,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "responsive layout at 1440",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:28.294Z",
+      "duration": 3332.393,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "responsive layout at 768",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:32.471Z",
+      "duration": 3112.828,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "responsive layout at 390",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:36.457Z",
+      "duration": 2981.5060000000003,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "keyboard focus",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:40.266Z",
+      "duration": 2847.131,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  },
+  {
+    "check": "workspace and generated",
+    "exitCode": 0,
+    "stats": {
+      "startTime": "2026-10-03T08:44:43.962Z",
+      "duration": 3189.042,
+      "expected": 1,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "errors": []
+  }
+]

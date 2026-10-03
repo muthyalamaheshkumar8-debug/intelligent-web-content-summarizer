@@ -1,0 +1,45 @@
+# Run behind an HTTPS reverse proxy. MongoDB and scraper have no host ports.
+services:
+  api:
+    build: .
+    restart: unless-stopped
+    init: true
+    ports: ["127.0.0.1:5000:5000"]
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: ${MONGODB_URI:?Set a MongoDB URI (Atlas or another authenticated database)}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      SCRAPER_TOKEN: ${SCRAPER_TOKEN:?Set SCRAPER_TOKEN}
+      SCRAPER_URL: http://scraper:5001
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:?Set your exact HTTPS origin}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    depends_on:
+      scraper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    mem_limit: 512m
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+  scraper:
+    build: ./scraper
+    restart: unless-stopped
+    init: true
+    environment:
+      SCRAPER_TOKEN: ${SCRAPER_TOKEN:?Set SCRAPER_TOKEN}
+      APP_ENV: production
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request; r=urllib.request.Request('http://127.0.0.1:5001/health',headers={'X-Scraper-Token':os.environ['SCRAPER_TOKEN']}); urllib.request.urlopen(r,timeout=2)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 512m
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]

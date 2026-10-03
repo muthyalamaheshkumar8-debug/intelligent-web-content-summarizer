@@ -5,16 +5,27 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "node --watch server.js",
+    "test": "node --test --test-concurrency=1 ../tests/*.test.js",
+    "lint": "cd .. && server/node_modules/.bin/eslint --config eslint.config.js server tests",
+    "test:db": "RUN_DB_TESTS=1 node --test ../tests/database.test.js",
+    "test:host": "RUN_HOST_TESTS=1 node --test ../tests/host.test.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
+    "axios": "^1.15.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "mongoose": "^8.0.0"
+    "express": "^4.22.1",
+    "mongoose": "^8.23.0",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.3.1"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "supertest": "^7.2.2",
+    "mongodb-memory-server": "^11.0.1",
+    "eslint": "^9.39.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

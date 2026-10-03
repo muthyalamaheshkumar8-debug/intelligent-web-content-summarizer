@@ -1,0 +1,27 @@
+FROM node:24-bookworm-slim AS frontend
+WORKDIR /app/client
+COPY client/package*.json ./
+RUN npm ci
+COPY client/ ./
+RUN npm run build
+
+# One free web service hosts the existing API and its private Python scraper.
+FROM node:24-bookworm-slim AS runtime
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 python3-venv ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN python3 -m venv /opt/venv
+COPY scraper/requirements.txt /tmp/requirements.txt
+RUN /opt/venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
+    && rm /tmp/requirements.txt
+WORKDIR /app/server
+COPY server/package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY server/ ./
+COPY scraper/ /app/scraper/
+COPY --from=frontend /app/client/dist /app/client/dist
+ENV NODE_ENV=production APP_ENV=production PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
+    PYTHON_BIN=/opt/venv/bin/python PORT=10000 SCRAPER_URL=http://127.0.0.1:5001
+USER node
+EXPOSE 10000
+CMD ["node", "host.js"]
