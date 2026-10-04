@@ -83,9 +83,8 @@ function createGeminiService(config, http = axios) {
           generationConfig: {
             temperature: 0.2,
             maxOutputTokens: 4096,
-            responseFormat: {
-              text: { mimeType: 'application/json', schema: responseSchema },
-            },
+            responseMimeType: 'application/json',
+            responseJsonSchema: responseSchema,
           },
         },
         {
