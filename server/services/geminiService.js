@@ -134,6 +134,16 @@ function createGeminiService(config, http = axios) {
         keyRejected: /API key (not valid|expired|was reported as leaked)/i.test(
           typeof providerError?.message === 'string' ? providerError.message : '',
         ),
+        messageTerms: [
+          'api key', 'credential', 'expired', 'invalid', 'not valid', 'leaked',
+          'responseformat', 'response_format', 'schema', 'unknown name',
+          'generationconfig', 'temperature', 'token', 'model', 'not found',
+          'location', 'region', 'country', 'billing', 'free tier', 'supported',
+          'permission', 'consumer', 'enabled', 'project', 'authentication',
+        ].filter((term) =>
+          typeof providerError?.message === 'string'
+            && providerError.message.toLowerCase().includes(term),
+        ),
       });
       if (error.code === 'ECONNABORTED')
         throw new AppError(
