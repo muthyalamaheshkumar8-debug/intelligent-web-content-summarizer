@@ -2,6 +2,27 @@
 
 A React reading workspace backed by Express, MongoDB, a Python HTML scraper, and Gemini. Paste a public article URL to create a concise brief and key takeaways. Summaries are saved to a private browser session, with real server-sent progress updates and history synchronization between tabs.
 
+
+## Live demo
+
+**[Open the live application](https://intelligent-web-content-summarizer.onrender.com/)**
+
+Generate concise article summaries and key takeaways, then revisit them in your private browser library.
+
+[![Live application showing a verified saved summary](docs/media/screenshot.jpg)](https://intelligent-web-content-summarizer.onrender.com/)
+
+**[Watch the 27-second sample video](https://raw.githubusercontent.com/muthyalamaheshkumar8-debug/intelligent-web-content-summarizer/main/docs/media/demo.mp4)** · [Video file](docs/media/demo.mp4)
+
+The video is a captioned walkthrough assembled from actual live-app screen captures: article URL entry, a real previously generated summary, key takeaways, copy/download controls, and saved history. It is not a continuous recording of a new generation request.
+
+Verified on **4 October 2026**: the public Render deployment starts successfully, MongoDB Atlas connects, Gemini generates a real summary, and the saved summary persists after reloading. The deployed service uses **Gemini 3.1 Flash-Lite** and the Render **Free** plan in Oregon. Provider availability and free-tier quotas can temporarily affect new summaries; Render cold starts can delay the first visit.
+
+Try this public sample URL:
+
+```text
+https://info.cern.ch/hypertext/WWW/TheProject.html
+```
+
 ## Architecture
 
 React / Vite / Tailwind → Express API → Python / BeautifulSoup → Gemini → MongoDB
@@ -81,14 +102,14 @@ Open http://localhost:5000. The scraper and MongoDB must still be running. These
 `render.yaml` explicitly selects one **Free** Docker web service in Singapore. `Dockerfile.render` builds the existing frontend and runs Express plus one Gunicorn scraper worker in that service. The scraper binds only to loopback; only Express is public. MongoDB stays external and persistent. `server/host.js` stops both processes if either fails and forwards graceful termination. The original separate-service Compose deployment remains supported.
 
 1. Create or reuse a **MongoDB Atlas Free (M0)** cluster. Do not choose Flex, a dedicated cluster, or paid backups. Create a database user limited to `readWrite` on the application database. Include that database name in its authenticated connection URI. Preserve any existing database and records; switching databases does not migrate old data automatically.
-2. Create a **free-tier Gemini API key** in [Google AI Studio](https://aistudio.google.com/api-keys). Do not enable paid billing for this deployment. The configured `gemini-3.8-flash` model currently offers free-tier input/output within provider quotas; model access varies by key and region. The free tier may use submitted content to improve Google's products.
+2. Create a **free-tier Gemini API key** in [Google AI Studio](https://aistudio.google.com/api-keys). Do not enable paid billing for this deployment. The live deployment uses `gemini-3.1-flash-lite`; the template defaults to `gemini-3.8-flash`. Select a free-tier model available to your key and region, within provider quotas. The free tier may use submitted content to improve Google's products.
 3. Sign in to Render and open the deployment link above. Review that the Blueprint creates exactly **one web service on the Free plan**, with no paid resource. Enter `MONGODB_URI` and `GEMINI_API_KEY` directly into Render's secret fields. Render generates independent session and scraper secrets; keep them stable to retain browser history. Never commit credentials or paste them into public issues.
 4. In Atlas Network Access, allow the outbound IP ranges shown in your Render service's Connect panel. Avoid an unrestricted `0.0.0.0/0` rule. Then deploy/redeploy the service. The API uses Render's automatically supplied HTTPS origin; for a custom domain set `CLIENT_ORIGIN` to the exact HTTPS origin (or a comma-separated list including both domains).
 5. Render assigns the actual `https://...onrender.com` link after creating the service. Check `/api/health`, submit a public article, reopen history, and confirm progress updates and deletion on that URL. Health checks cover MongoDB and Python, not Gemini key/model/quota access.
 
 To stay at zero cost, keep Render and Atlas on their free plans, do not add a payment method or enable paid AI billing, and monitor all included quotas. Render grants 750 free instance hours per workspace each month, shared with any other free web services. It sleeps after 15 minutes of inactivity, and cold startup takes about a minute. Build/bandwidth limits also apply; without a payment method exhausted usage suspends the service or builds instead of billing. Atlas Free provides 0.5 GB storage and limited throughput. Free hosting is suitable for a small portfolio/hobby application and does not provide production availability guarantees. This configuration does not use a keep-alive workaround.
 
-Auto-deploy is disabled to avoid unreviewed deployments of downstream copies. After future pushes, use Render's Manual Deploy for the intended commit. No live URL exists until the account setup and first deployment complete.
+The Blueprint template disables auto-deploy for new copies. The existing live service is connected to `main` with auto-deploy enabled. For a separate deployment, Render assigns its own URL after account setup and the first successful deployment.
 
 References: [Render free limits](https://render.com/docs/free), [Blueprint secrets](https://render.com/docs/blueprint-spec), [Atlas Free limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/), [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing).
 
