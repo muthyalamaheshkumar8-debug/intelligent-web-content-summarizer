@@ -32,9 +32,12 @@ test('Gemini uses API-key authentication, schema JSON and separates source from 
   assert.equal(call[2].headers['x-goog-api-key'], 'test-key');
   assert.equal(call[2].headers.Authorization, undefined);
   assert.equal(
-    call[1].generationConfig.responseFormat.text.mimeType,
+    call[1].generationConfig.responseMimeType,
     'application/json',
   );
+  assert.deepEqual(call[1].generationConfig.responseJsonSchema.required, [
+    'summary', 'keyPoints', 'topic',
+  ]);
   assert.equal(
     JSON.parse(call[1].contents[0].parts[0].text).article,
     article.content,
