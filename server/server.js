@@ -62,6 +62,7 @@ if (require.main === module)
         ? error.name
         : 'Error',
       databaseCode: Number.isInteger(error.code) ? error.code : undefined,
+      authenticationFailed: /bad auth|authentication failed/i.test(error.message || ''),
       message:
         error.name === 'MongooseServerSelectionError'
           ? 'MongoDB is unreachable. Check MONGODB_URI and network access.'
