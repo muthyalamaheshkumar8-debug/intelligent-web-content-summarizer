@@ -1,5 +1,6 @@
 const axios = require('axios');
 const { AppError } = require('../utils/errors');
+const { log } = require('../utils/logger');
 
 const responseSchema = {
   type: 'object',
@@ -111,6 +112,29 @@ function createGeminiService(config, http = axios) {
       return parseSummary(text);
     } catch (error) {
       if (error instanceof AppError) throw error;
+      const providerError = error.response?.data?.error;
+      const knownReasons = new Set([
+        'API_KEY_INVALID',
+        'API_KEY_EXPIRED',
+        'API_KEY_SERVICE_BLOCKED',
+        'API_KEY_HTTP_REFERRER_BLOCKED',
+        'API_KEY_IP_ADDRESS_BLOCKED',
+        'SERVICE_DISABLED',
+        'BILLING_DISABLED',
+      ]);
+      log('error', 'ai_request_failed', {
+        providerStatus: Number.isInteger(error.response?.status)
+          ? error.response.status
+          : null,
+        reasons: Array.isArray(providerError?.details)
+          ? providerError.details
+              .map((detail) => detail.reason)
+              .filter((reason) => knownReasons.has(reason))
+          : [],
+        keyRejected: /API key (not valid|expired|was reported as leaked)/i.test(
+          typeof providerError?.message === 'string' ? providerError.message : '',
+        ),
+      });
       if (error.code === 'ECONNABORTED')
         throw new AppError(
           504,
