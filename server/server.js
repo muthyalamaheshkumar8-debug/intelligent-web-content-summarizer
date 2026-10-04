@@ -58,6 +58,10 @@ async function start() {
 if (require.main === module)
   start().catch((error) => {
     log('error', 'startup_failed', {
+      errorType: /^[A-Za-z][A-Za-z0-9]{0,79}$/.test(error.name || '')
+        ? error.name
+        : 'Error',
+      databaseCode: Number.isInteger(error.code) ? error.code : undefined,
       message:
         error.name === 'MongooseServerSelectionError'
           ? 'MongoDB is unreachable. Check MONGODB_URI and network access.'
