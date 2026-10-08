@@ -93,8 +93,8 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function createGeminiService(config, http = axios, pause = wait) {
   return async (articleText, title) => {
     try {
-      const request = () => http.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent`,
+      const request = (model) => http.post(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
         {
           systemInstruction: {
             parts: [
@@ -137,12 +137,17 @@ function createGeminiService(config, http = axios, pause = wait) {
       let response;
       for (let attempt = 0; attempt < 2; attempt++) {
         try {
-          response = await request();
+          response = await request(attempt === 0 ? config.model :
+            (config.fallbackModel || config.model));
           break;
         } catch (error) {
           const transient = [500, 502, 503, 504].includes(error.response?.status)
-            || ['ECONNABORTED', 'ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN'].includes(error.code);
+            || ['ECONNABORTED', 'ECONNRESET', 'ETIMEDOUT', 'EAI_AGAIN'].includes(error.code)
+            || (error.response?.status === 404 && config.fallbackModel &&
+              config.fallbackModel !== config.model);
           if (attempt === 1 || !transient) throw error;
+          log('warn', 'ai_retry', { alternateModel: Boolean(config.fallbackModel &&
+            config.fallbackModel !== config.model) });
           await pause(1000 + Math.floor(Math.random() * 250));
         }
       }

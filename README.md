@@ -124,9 +124,11 @@ A working homepage, saved history, and `/api/health` do not prove that Gemini ca
 | `AI_MODEL_UNAVAILABLE` | Set `GEMINI_MODEL` to an available model supported by the configured key. |
 | `AI_CONFIGURATION_ERROR` | Check provider status and the allowlisted log terms for request-schema, region or account configuration problems. |
 | `AI_RATE_LIMITED` | Wait for the applicable quota to reset; repeated immediate submissions will not help. |
-| `AI_TIMEOUT` / `AI_UNAVAILABLE` | A transient server/network failure is retried once with a short randomized delay. If both attempts fail, retry later and check provider status. |
+| `AI_TIMEOUT` / `AI_UNAVAILABLE` | Check provider status. Transient failures switch to the alternate model once, then return labelled source excerpts if AI remains unavailable. |
 
-Each AI attempt has a 30-second timeout. Authentication, configuration and quota errors are not automatically retried. Provider messages, API keys and project identifiers are never returned to visitors. No generated fallback or sample summary replaces a failed AI response.
+Each AI attempt has a 30-second timeout, with at most two calls total. `GEMINI_FALLBACK_MODEL` defaults to `gemini-3.8-flash` (or `gemini-3.1-flash-lite` when the primary is already 3.8 Flash). Transient failures and unavailable-model errors try the alternate model; authentication, configuration and quota errors are not retried.
+
+If AI remains unavailable, times out, reaches its quota or lacks both models, the server selects up to five distinct excerpts from the current article. These are explicitly labelled **Source-based summary**, saved with `method: extractive`, and labelled in copied/downloaded text and reopened history. Excerpts preserve source order and may contain fewer than three points for short or repetitive articles. This fallback does not paraphrase or invent claims. Key rejection, access/configuration errors and blocked or invalid model output still return actionable failures. Provider messages, API keys and project identifiers are never returned to visitors.
 
 After correcting the deployment, submit a new public article, confirm a real summary and takeaways, then reload and reopen it from history. Do not consider a successful health check alone to be a completed fix.
 

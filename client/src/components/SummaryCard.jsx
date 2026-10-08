@@ -4,7 +4,11 @@ import Icon from './Icon';
 export default function SummaryCard({ summary, onDelete, deleting }) {
   const [copyState, setCopyState] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const text = `${summary.title}\n\n${summary.summary}\n\nKey takeaways\n${summary.keyPoints.map((point) => `• ${point}`).join('\n')}\n\nSource: ${summary.url}`;
+  const sourceBased = summary.method === 'extractive';
+  const methodNote = sourceBased
+    ? 'Source-based summary: AI generation was unavailable. These excerpts were selected from the article.'
+    : 'AI-assisted summary';
+  const text = `${summary.title}\n\n${methodNote}\n\n${summary.summary}\n\nKey takeaways\n${summary.keyPoints.map((point) => `• ${point}`).join('\n')}\n\nSource: ${summary.url}`;
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(text);
@@ -53,6 +57,7 @@ export default function SummaryCard({ summary, onDelete, deleting }) {
           </>
         )}
       </div>
+      {sourceBased && <p className="ai-note" role="status">{methodNote}</p>}
       <section className="overview">
         <h3>The brief</h3>
         <p>{summary.summary}</p>
@@ -121,7 +126,7 @@ export default function SummaryCard({ summary, onDelete, deleting }) {
         </div>
       )}
       <p className="ai-note">
-        AI summaries can miss context. Check the original article for details.
+        {sourceBased ? 'Selected excerpts can miss context.' : 'AI summaries can miss context.'} Check the original article for details.
       </p>
     </article>
   );

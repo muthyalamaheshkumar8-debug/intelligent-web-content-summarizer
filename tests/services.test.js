@@ -148,6 +148,25 @@ test('persistent temporary failures stop after two attempts', async () => {
   assert.equal(attempts, 2);
 });
 
+test('an unavailable primary model switches to the alternate model within two calls', async () => {
+  for (const status of [503, 404]) {
+    const urls = [];
+    const generate = createGeminiService({ model: 'primary', fallbackModel: 'alternate',
+      geminiKey: 'test' }, {
+      async post(url) {
+        urls.push(url);
+        if (urls.length === 1) throw { response: { status } };
+        return { data: { candidates: [{ finishReason: 'STOP',
+          content: { parts: [{ text: JSON.stringify(generated) }] } }] } };
+      },
+    }, async () => {});
+    assert.deepEqual(await generate(article.content, article.title), generated);
+    assert.match(urls[0], /models\/primary:/);
+    assert.match(urls[1], /models\/alternate:/);
+    assert.equal(urls.length, 2);
+  }
+});
+
 test('scraper integration validates payloads, passes token and maps failures', async () => {
   const config = {
     scraperUrl: 'http://127.0.0.1:5001',

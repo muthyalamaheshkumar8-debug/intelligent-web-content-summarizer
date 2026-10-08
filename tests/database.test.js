@@ -6,7 +6,9 @@ const {
   request,
   generated,
   article,
+  AppError,
 } = require('./helpers/fixtures');
+const { createSummarizationService } = require('../server/services/summarizationService');
 
 // Opt-in because this starts a real mongod binary; no application database is used.
 test(
@@ -23,7 +25,11 @@ test(
     try {
       await mongoose.connect(mongo.getUri());
       await Summary.syncIndexes();
-      const { app, agent, post } = fixture({ model: Summary });
+      const { app, agent, post } = fixture({ model: Summary,
+        generateSummary: createSummarizationService({}, async () => {
+          throw new AppError(503, 'AI_UNAVAILABLE', 'Unavailable');
+        }),
+      });
       await agent.get('/api/session');
       const created = await post({ url: 'https://example.com/article' });
       assert.equal(created.status, 201);
@@ -31,6 +37,7 @@ test(
         .select('+ownerId +content')
         .lean();
       assert.ok(stored.content);
+      assert.equal(stored.method, 'extractive');
       const date = new Date();
       await Summary.insertMany(
         Array.from({ length: 24 }, (_, i) => ({
@@ -67,6 +74,9 @@ test(
         (await stranger.get(`/api/summaries/${created.body._id}`)).status,
         404,
       );
+      await mongoose.disconnect();
+      await mongoose.connect(mongo.getUri());
+      assert.equal((await Summary.findById(created.body._id).lean()).method, 'extractive');
       assert.equal(
         (
           await agent

@@ -6,7 +6,7 @@ const { loadConfig } = require('./config');
 const { createApp } = require('./app');
 const Summary = require('./models/Summary');
 const { createScraperService } = require('./services/scraperService');
-const { createGeminiService } = require('./services/geminiService');
+const { createSummarizationService } = require('./services/summarizationService');
 const { log } = require('./utils/logger');
 
 async function start() {
@@ -26,7 +26,7 @@ async function start() {
     config,
     model: Summary,
     scrapeArticle: scraper.scrapeArticle,
-    generateSummary: createGeminiService(config),
+    generateSummary: createSummarizationService(config),
     readiness: async () =>
       mongoose.connection.readyState === 1 && (await scraper.healthy()),
   });

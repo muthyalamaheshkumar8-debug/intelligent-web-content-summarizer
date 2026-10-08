@@ -1,6 +1,7 @@
 // Deterministic test fixture, never used by development or production startup.
 const { setTimeout: delay } = require('node:timers/promises');
 const { fixture, article, generated, AppError } = require('./helpers/fixtures');
+const { createSummarizationService } = require('../server/services/summarizationService');
 const { app } = fixture({
   config: {
     origins: ['http://127.0.0.1:5050'],
@@ -18,12 +19,14 @@ const { app } = fixture({
         'NO_CONTENT',
         'This page is protected. Try another public article.',
       );
-    return article;
+    return url.includes('/outage') ? { ...article, title: 'Provider outage article' } : article;
   },
-  generateSummary: async () => {
+  generateSummary: createSummarizationService({}, async (_text, title) => {
     await delay(300);
+    if (title === 'Provider outage article')
+      throw new AppError(503, 'AI_UNAVAILABLE', 'Unavailable');
     return generated;
-  },
+  }),
 });
 const server = app.listen(5050, '127.0.0.1');
 process.on('SIGTERM', () => {

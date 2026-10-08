@@ -9,6 +9,7 @@ const summarySchema = new mongoose.Schema(
     summary: { type: String, required: true, maxlength: 6000 },
     keyPoints: [{ type: String, maxlength: 1000 }],
     topic: { type: String, maxlength: 120 },
+    method: { type: String, enum: ['ai', 'extractive'], default: 'ai' },
     wordCount: { type: Number, min: 0 },
     readingMinutes: { type: Number, min: 1 },
   },

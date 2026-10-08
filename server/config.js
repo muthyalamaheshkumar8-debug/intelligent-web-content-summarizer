@@ -34,6 +34,10 @@ function loadConfig(env = process.env) {
   }
   const model = env.GEMINI_MODEL || 'gemini-3.8-flash';
   if (!/^[a-zA-Z0-9.-]+$/.test(model)) throw new Error('Invalid GEMINI_MODEL.');
+  const fallbackModel = env.GEMINI_FALLBACK_MODEL ||
+    (model === 'gemini-3.8-flash' ? 'gemini-3.1-flash-lite' : 'gemini-3.8-flash');
+  if (!/^[a-zA-Z0-9.-]+$/.test(fallbackModel))
+    throw new Error('Invalid GEMINI_FALLBACK_MODEL.');
   const port = Number(env.PORT || 5000);
   const trustProxy = Number(env.TRUST_PROXY || 0);
   if (
@@ -50,6 +54,7 @@ function loadConfig(env = process.env) {
     port,
     trustProxy,
     model,
+    fallbackModel,
     mongoUri: env.MONGODB_URI,
     geminiKey: env.GEMINI_API_KEY,
     scraperUrl: env.SCRAPER_URL || 'http://127.0.0.1:5001',

@@ -65,6 +65,23 @@ test('private history, library navigation and search', async ({ page, context })
   await expect(page.locator('.history-item')).toHaveCount(0)
 })
 
+test('provider outage shows a labelled source summary, including after reload and copy', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/')
+  await page.getByLabel('Article URL', { exact: true }).fill('https://example.com/outage')
+  await page.getByRole('button', { name: 'Summarize article' }).click()
+  await expect(page.getByRole('heading', { name: 'Provider outage article', exact: true })).toBeVisible()
+  await expect(page.getByRole('status').filter({ hasText: 'Source-based summary:' })).toBeVisible()
+  await expect(page.getByRole('alert')).toHaveCount(0)
+  await expect(page.locator('.takeaways li')).toHaveCount(1)
+  await page.reload()
+  await page.locator('.history-item').click()
+  await expect(page.getByRole('status').filter({ hasText: 'Source-based summary:' })).toBeVisible()
+  await page.getByRole('button', { name: 'Copy summary', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Copied', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('Source-based summary:')
+})
+
 test('upstream failure and retry, live history synchronization between tabs', async ({ page, context }) => {
   await page.goto('/')
   await expect(page.getByText('Live updates connected')).toBeVisible()
