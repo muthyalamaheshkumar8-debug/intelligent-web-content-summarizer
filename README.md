@@ -113,6 +113,25 @@ The Blueprint template disables auto-deploy for new copies. The existing live se
 
 References: [Render free limits](https://render.com/docs/free), [Blueprint secrets](https://render.com/docs/blueprint-spec), [Atlas Free limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/), [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing).
 
+## Troubleshooting new summaries
+
+A working homepage, saved history, and `/api/health` do not prove that Gemini can generate new summaries. The health endpoint checks MongoDB and the scraper only. If extraction finishes and generation fails, inspect the safe `ai_request_failed` and `request_failed` events in the deployment logs.
+
+| Error code | Next step for the site owner |
+| --- | --- |
+| `AI_KEY_REJECTED` | Check key status in Google AI Studio. If invalid, expired or blocked, replace `GEMINI_API_KEY` securely in the hosting environment and redeploy. |
+| `AI_PERMISSION_DENIED` | Check API restrictions, service enablement and project access. |
+| `AI_MODEL_UNAVAILABLE` | Set `GEMINI_MODEL` to an available model supported by the configured key. |
+| `AI_CONFIGURATION_ERROR` | Check provider status and the allowlisted log terms for request-schema, region or account configuration problems. |
+| `AI_RATE_LIMITED` | Wait for the applicable quota to reset; repeated immediate submissions will not help. |
+| `AI_TIMEOUT` / `AI_UNAVAILABLE` | A transient server/network failure is retried once with a short randomized delay. If both attempts fail, retry later and check provider status. |
+
+Each AI attempt has a 30-second timeout. Authentication, configuration and quota errors are not automatically retried. Provider messages, API keys and project identifiers are never returned to visitors. No generated fallback or sample summary replaces a failed AI response.
+
+After correcting the deployment, submit a new public article, confirm a real summary and takeaways, then reload and reopen it from history. Do not consider a successful health check alone to be a completed fix.
+
+Provider reference: [Gemini troubleshooting](https://ai.google.dev/gemini-api/docs/troubleshooting).
+
 ## Production deployment
 
 1. Build and run behind an HTTPS reverse proxy using `compose.yaml` (Docker Compose v2).

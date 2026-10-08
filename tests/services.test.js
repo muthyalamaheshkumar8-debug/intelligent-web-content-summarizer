@@ -42,7 +42,7 @@ test('Gemini uses API-key authentication, schema JSON and separates source from 
     JSON.parse(call[1].contents[0].parts[0].text).article,
     article.content,
   );
-  assert.equal(call[2].timeout, 60000);
+  assert.equal(call[2].timeout, 30000);
 });
 
 test('invalid, missing and truncated model output is rejected', async () => {
@@ -70,7 +70,7 @@ test('upstream AI errors and timeouts do not leak provider messages', async () =
   for (const [error, code] of [
     [{ response: { status: 429 } }, 'AI_RATE_LIMITED'],
     [{ code: 'ECONNABORTED' }, 'AI_TIMEOUT'],
-    [{ response: { status: 401 }, message: 'secret' }, 'AI_UNAVAILABLE'],
+    [{ response: { status: 401 }, message: 'secret' }, 'AI_KEY_REJECTED'],
   ]) {
     const generate = createGeminiService(
       { model: 'test', geminiKey: 'test' },
@@ -79,9 +79,73 @@ test('upstream AI errors and timeouts do not leak provider messages', async () =
           throw error;
         },
       },
+      async () => {},
     );
     await assert.rejects(generate('text', 'title'), { code });
   }
+});
+
+test('provider configuration errors are actionable, private and never retried', async () => {
+  const cases = [
+    [400, { message: 'API key not valid. secret-key', details: [null] }, 'AI_KEY_REJECTED'],
+    [403, { message: 'Your API key was reported as leaked. secret-key' }, 'AI_KEY_REJECTED'],
+    [400, { details: [{ reason: 'API_KEY_EXPIRED' }] }, 'AI_KEY_REJECTED'],
+    [403, { message: 'Permission denied for private-project' }, 'AI_PERMISSION_DENIED'],
+    [404, { message: 'models/private-model not found' }, 'AI_MODEL_UNAVAILABLE'],
+    [400, { message: 'Invalid schema for private-project' }, 'AI_CONFIGURATION_ERROR'],
+    [429, { message: 'Quota exceeded for private-project' }, 'AI_RATE_LIMITED'],
+  ];
+  for (const [status, provider, code] of cases) {
+    let attempts = 0;
+    const generate = createGeminiService({ model: 'test', geminiKey: 'test' }, {
+      async post() {
+        attempts++;
+        throw { response: { status, data: { error: provider } } };
+      },
+    }, async () => assert.fail('Configuration and quota errors must not retry'));
+    await assert.rejects(generate(article.content, article.title), (error) => {
+      assert.equal(error.code, code);
+      assert.equal(error.status, 503);
+      assert.doesNotMatch(error.message, /secret-key|private-project|private-model/);
+      return true;
+    });
+    assert.equal(attempts, 1);
+  }
+});
+
+test('temporary AI failures recover with one bounded retry', async () => {
+  for (const failure of [
+    { response: { status: 503 } },
+    { response: { status: 502 } },
+    { code: 'ECONNRESET' },
+    { code: 'ECONNABORTED' },
+  ]) {
+    let attempts = 0;
+    const delays = [];
+    const generate = createGeminiService({ model: 'test', geminiKey: 'test' }, {
+      async post() {
+        if (++attempts === 1) throw failure;
+        return { data: { candidates: [{ finishReason: 'STOP',
+          content: { parts: [{ text: JSON.stringify(generated) }] } }] } };
+      },
+    }, async (ms) => delays.push(ms));
+    assert.deepEqual(await generate(article.content, article.title), generated);
+    assert.equal(attempts, 2);
+    assert.equal(delays.length, 1);
+    assert.ok(delays[0] >= 1000 && delays[0] < 1250);
+  }
+});
+
+test('persistent temporary failures stop after two attempts', async () => {
+  let attempts = 0;
+  const generate = createGeminiService({ model: 'test', geminiKey: 'test' }, {
+    async post() {
+      attempts++;
+      throw { response: { status: 503 } };
+    },
+  }, async () => {});
+  await assert.rejects(generate(article.content, article.title), { code: 'AI_UNAVAILABLE' });
+  assert.equal(attempts, 2);
 });
 
 test('scraper integration validates payloads, passes token and maps failures', async () => {
